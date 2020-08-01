@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, SafeAreaView, Alert } from "react-native";
 import * as Location from "expo-location";
 import axios from "axios";
 import Weather from "./Weather";
+import { StatusBar } from "expo-status-bar";
 
 const API_KEY = "58d07c2d6dade6e696cf17aaf7951f56";
 
@@ -11,6 +12,7 @@ export default function Loading() {
   const [latitude, setLatitude] = useState(0);
   const [longitude, setLongitude] = useState(0);
   const [temp, setTemp] = useState(0);
+  const [weatherData, setWeatherData] = useState({});
 
   const getLocation = async () => {
     try {
@@ -18,7 +20,9 @@ export default function Loading() {
       await Location.requestPermissionsAsync();
       const {
         coords: { latitude, longitude },
-      } = await Location.getCurrentPositionAsync();
+      } = await Location.getCurrentPositionAsync({
+        LocationOptions: Location.Accuracy.BestForNavigation,
+      });
       // console.log(latitude, longitude);
       setLatitude(latitude);
       setLongitude(longitude);
@@ -29,10 +33,11 @@ export default function Loading() {
 
   const getWeatherData = async () => {
     const { data } = await axios.get(
-      `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&APPID=${API_KEY}&units=metric`
+      `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&APPID=${API_KEY}&units=metric&lang=kr`
     );
-    console.log(data.main.temp);
+    console.log(data);
     setTemp(data.main.temp);
+    setWeatherData(data);
     setLoading(false);
   };
 
@@ -43,10 +48,11 @@ export default function Loading() {
 
   return (
     <View style={styles.container}>
+      <StatusBar/>
       {isLoading ? (
         <Text style={styles.text}>Getting The Weather...</Text>
       ) : (
-        <Weather temp={Math.round(temp)} />
+        <Weather weatherData={weatherData} />
       )}
     </View>
   );
@@ -56,11 +62,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "flex-end",
-    paddingHorizontal: 30,
-    paddingVertical: 100,
-    backgroundColor: "#FDF6AA",
   },
   text: {
+    paddingHorizontal: 30,
+    paddingVertical: 100,
     color: "#2c2c2c",
     fontSize: 30,
   },
